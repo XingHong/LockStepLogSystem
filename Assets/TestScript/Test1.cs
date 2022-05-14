@@ -16,4 +16,15 @@ public class Test1
     {
         a1 = val;
     }
+
+    protected virtual void SetA2(int val)
+    {
+        a2 = val;
+    }
+
+    public static int TestStatic()
+    {
+        int res = 399;
+        return res;
+    }
 }

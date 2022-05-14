@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Text.RegularExpressions;
 
 public class AutoInstertEditor
 {
@@ -14,10 +15,11 @@ public class AutoInstertEditor
         DirectoryInfo root = new DirectoryInfo(filePath);
         List<FileInfo> fileInfoList = new List<FileInfo>();
         ForeachDir(fileInfoList, root);
-        
+
         foreach (FileInfo file in fileInfoList)
         {
             string content = ReadFileContent(file.FullName);
+            IntertLogCode(content, "");
             break;
         }
     }
@@ -47,7 +49,11 @@ public class AutoInstertEditor
     }
 
     private static void IntertLogCode(string content, string path)
-    { 
-
+    {
+        Regex regex = new Regex(@"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)\s*\{[^\{\}]*(((?'Open'\{)[^\{\}]*)+((?'-Open'\})[^\{\}]*)+)*(?(Open)(?!))\}");
+        foreach (Match match in regex.Matches(content))
+        {
+            Debug.Log(match.Value);
+        }
     }
 }
