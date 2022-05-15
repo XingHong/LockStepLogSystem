@@ -25,6 +25,16 @@ public class Test1
     public static int TestStatic()
     {
         int res = 399;
+        if (res > 0)
+        {
+            res = 333;
+        }
         return res;
+    }
+
+    private void SetAll(int v1, int v2)
+    {
+        a1 = v1;
+        a2 = v2;
     }
 }
