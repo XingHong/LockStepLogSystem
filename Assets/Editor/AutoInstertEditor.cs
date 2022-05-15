@@ -10,6 +10,7 @@ public class AutoInstertEditor
 {
     private const string CODE_FILE_ROOT = "TestScript";
     private const string FUNCTION_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)\s*\{[^\{\}]*(((?'Open'\{)[^\{\}]*)+((?'-Open'\})[^\{\}]*)+)*(?(Open)(?!))\}";
+    //函数的第一行
     private const string FIRSTLINE_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)";
     private static Regex FunctionRegex;
     private static Regex FirstLineRegex;
@@ -25,8 +26,7 @@ public class AutoInstertEditor
 
         foreach (FileInfo file in fileInfoList)
         {
-            string content = ReadFileContent(file.FullName);
-            IntertLogCode(content, "");
+            IntertLogTrackCode(file.FullName);
             break;
         }
     }
@@ -45,19 +45,12 @@ public class AutoInstertEditor
         }
     }
 
-    private static string ReadFileContent(string path)
+    private static void IntertLogTrackCode(string path)
     {
-        string content = string.Empty;
-        using (StreamReader sr = new StreamReader(path))
-        {
-            content = sr.ReadToEnd();
-        }
-        return content;
-    }
-
-    private static void IntertLogCode(string content, string path)
-    {
-        string res = content;
+        if (!File.Exists(path))
+            return;
+        string content = File.ReadAllText(path);
+        string res = content;       
         foreach (Match match in FunctionRegex.Matches(content))
         {
             string funContent = match.ToString();
