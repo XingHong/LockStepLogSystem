@@ -11,14 +11,29 @@ public class AutoInstertEditor
     private const string CODE_FILE_ROOT = "TestScript";
     private const string FUNCTION_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)\s*\{[^\{\}]*(((?'Open'\{)[^\{\}]*)+((?'-Open'\})[^\{\}]*)+)*(?(Open)(?!))\}";
     //函数的第一行
-    private const string FIRSTLINE_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)";
+    private const string FUNCTION_HEAD_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)";
+    private const string LEFT_BRACE_REGEX = @"{";
+    private const string FIRST_CODE_REGEX = @"\S+(.)*";
+    private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*)";
+    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack()";
+
     private static Regex FunctionRegex;
-    private static Regex FirstLineRegex;
+    private static Regex FunctionHeadRegex;
+    private static Regex LeftBraceRegex;
+    private static Regex FirstCodeRegex;
+    private static Regex LogTrackCodeRegex;
+    private static Regex LogTrackCodeIgnoreRegex;
+
     [MenuItem("AutoInsert/自动插入日志代码")]
     public static void InsertAction()
     {
         FunctionRegex = new Regex(FUNCTION_REGEX);
-        FirstLineRegex = new Regex(FIRSTLINE_REGEX);
+        FunctionHeadRegex = new Regex(FUNCTION_HEAD_REGEX);
+        LeftBraceRegex = new Regex(LEFT_BRACE_REGEX);
+        FirstCodeRegex = new Regex(FIRST_CODE_REGEX);
+        LogTrackCodeRegex = new Regex(LOG_TRACK_CODE_REGEX);
+        LogTrackCodeIgnoreRegex = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
+
         string filePath = Application.dataPath + "/" + CODE_FILE_ROOT;
         DirectoryInfo root = new DirectoryInfo(filePath);
         List<FileInfo> fileInfoList = new List<FileInfo>();
@@ -50,30 +65,41 @@ public class AutoInstertEditor
         if (!File.Exists(path))
             return;
         string content = File.ReadAllText(path);
-        string res = content;       
-        foreach (Match match in FunctionRegex.Matches(content))
+        string res = content;
+        var matchs = FunctionRegex.Matches(content);
+        int cnt = matchs.Count;
+        for(int i = cnt - 1; i >= 0; --i)
         {
-            string funContent = match.ToString();
-            Match funNameMatch = FirstLineRegex.Match(funContent);
-            string code = GetInsertCode(funNameMatch.ToString());
-            res = InsertCodeToFirstLine(funContent, code);
+            var match = matchs[i];
+            res = InsertCodeToFirstLine(match, res);
         }
         Debug.Log(res);
     }
 
-    private static string InsertCodeToFirstLine(string content, string code)
+    private static string InsertCodeToFirstLine(Match matchFunc, string content)
     {
-        string res = string.Empty;
-        int idx = content.IndexOf('{');
-        string suffix = string.Empty;
-        ++idx;
-        while (idx < content.Length && (content[idx] == '\t' || content[idx] == ' ' || content[idx] == '\n' || content[idx] == '\r'))
+        bool hasChange = false;
+        Match mathcLeftBrace = LeftBraceRegex.Match(content, matchFunc.Index, matchFunc.Length);
+        if (mathcLeftBrace.Success)
         {
-            suffix += content[idx];
-            ++idx;
+            int len = matchFunc.Index + matchFunc.Length - (mathcLeftBrace.Index + mathcLeftBrace.Length);
+            Match matchFirstCode = FirstCodeRegex.Match(content, mathcLeftBrace.Index + mathcLeftBrace.Length, len);
+            if (!LogTrackCodeRegex.IsMatch(matchFirstCode.Value))
+            {
+                if (!LogTrackCodeIgnoreRegex.IsMatch(matchFirstCode.Value))
+                {
+                    Match mathcFunHead = FunctionHeadRegex.Match(content, matchFunc.Index, matchFunc.Length);
+                    string code = GetInsertCode(mathcFunHead.ToString());
+                    content = content.Insert(mathcLeftBrace.Index + mathcLeftBrace.Length, code);
+                    hasChange = true;
+                }
+            }
         }
-        res = content.Insert(idx, code + suffix);
-        return res;
+        if (hasChange)
+        {
+            Debug.Log(content);
+        }
+        return content;
     }
 
     private static string GetInsertCode(string firstLine)

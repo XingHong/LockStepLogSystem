@@ -7,4 +7,8 @@ public class FSPDebuger
     public static void LogTrack(int hashId, params object[] ps)
     { 
     }
+
+    public static void IgnoreTrack()
+    { 
+    }
 }
