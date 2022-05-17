@@ -12,6 +12,10 @@ public class Test1
         a2 = 2;
     }
 
+    /// <summary>
+    /// test
+    /// </summary>
+    /// <param name="val"></param>
     public void SetA1(int val)
     {
         a1 = val;
@@ -32,9 +36,14 @@ public class Test1
         return res;
     }
 
-    private void SetAll(int v1, int v2)
+    private void SetAll(int v1 = 2, int v2 = 1)
     {
         a1 = v1;
         a2 = v2;
+    }
+
+    private void TestOutRef(out int v1, ref int v2)
+    {
+        v1 = 45;
     }
 }
