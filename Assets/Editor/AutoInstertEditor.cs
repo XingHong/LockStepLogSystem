@@ -68,17 +68,21 @@ public class AutoInstertEditor
         string res = content;
         var matchs = FunctionRegex.Matches(content);
         int cnt = matchs.Count;
-        for(int i = cnt - 1; i >= 0; --i)
+        bool hasChange = false;
+        for (int i = cnt - 1; i >= 0; --i)
         {
             var match = matchs[i];
-            res = InsertCodeToFirstLine(match, res);
+            res = InsertCodeToFirstLine(match, res, ref hasChange);
         }
-        Debug.Log(res);
+        if (hasChange)
+        { 
+            Debug.Log(res);
+            File.WriteAllText(path, res);
+        }
     }
 
-    private static string InsertCodeToFirstLine(Match matchFunc, string content)
+    private static string InsertCodeToFirstLine(Match matchFunc, string content, ref bool hasChange)
     {
-        bool hasChange = false;
         Match mathcLeftBrace = LeftBraceRegex.Match(content, matchFunc.Index, matchFunc.Length);
         if (mathcLeftBrace.Success)
         {
@@ -94,10 +98,6 @@ public class AutoInstertEditor
                     hasChange = true;
                 }
             }
-        }
-        if (hasChange)
-        {
-            Debug.Log(content);
         }
         return content;
     }
