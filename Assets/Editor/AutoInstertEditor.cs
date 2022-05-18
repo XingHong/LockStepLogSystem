@@ -16,23 +16,22 @@ public class AutoInstertEditor
     private const string FIRST_CODE_REGEX = @"\S+(.)*";
     private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*)";
     private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack()";
-
-    private static Regex FunctionRegex;
-    private static Regex FunctionHeadRegex;
-    private static Regex LeftBraceRegex;
-    private static Regex FirstCodeRegex;
-    private static Regex LogTrackCodeRegex;
-    private static Regex LogTrackCodeIgnoreRegex;
+    private static Regex ms_regexFunction;
+    private static Regex ms_regexFunctionHead;
+    private static Regex ms_regexLeftBrace;
+    private static Regex ms_regexFirstCode;
+    private static Regex ms_regexLogTrackCode;
+    private static Regex ms_regexLogTrackCodeIgnore;
 
     [MenuItem("AutoInsert/自动插入日志代码")]
     public static void InsertAction()
     {
-        FunctionRegex = new Regex(FUNCTION_REGEX);
-        FunctionHeadRegex = new Regex(FUNCTION_HEAD_REGEX);
-        LeftBraceRegex = new Regex(LEFT_BRACE_REGEX);
-        FirstCodeRegex = new Regex(FIRST_CODE_REGEX);
-        LogTrackCodeRegex = new Regex(LOG_TRACK_CODE_REGEX);
-        LogTrackCodeIgnoreRegex = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
+        ms_regexFunction = new Regex(FUNCTION_REGEX);
+        ms_regexFunctionHead = new Regex(FUNCTION_HEAD_REGEX);
+        ms_regexLeftBrace = new Regex(LEFT_BRACE_REGEX);
+        ms_regexFirstCode = new Regex(FIRST_CODE_REGEX);
+        ms_regexLogTrackCode = new Regex(LOG_TRACK_CODE_REGEX);
+        ms_regexLogTrackCodeIgnore = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
 
         string filePath = Application.dataPath + "/" + CODE_FILE_ROOT;
         DirectoryInfo root = new DirectoryInfo(filePath);
@@ -42,7 +41,11 @@ public class AutoInstertEditor
         foreach (FileInfo file in fileInfoList)
         {
             IntertLogTrackCode(file.FullName);
-            break;
+        }
+
+        foreach (FileInfo file in fileInfoList)
+        {
+            HandleLogTrack(file.FullName);
         }
     }
 
@@ -66,7 +69,7 @@ public class AutoInstertEditor
             return;
         string content = File.ReadAllText(path);
         string res = content;
-        var matchs = FunctionRegex.Matches(content);
+        var matchs = ms_regexFunction.Matches(content);
         int cnt = matchs.Count;
         bool hasChange = false;
         for (int i = cnt - 1; i >= 0; --i)
@@ -77,22 +80,22 @@ public class AutoInstertEditor
         if (hasChange)
         { 
             Debug.Log(res);
-            File.WriteAllText(path, res);
+            // File.WriteAllText(path, res);
         }
     }
 
     private static string InsertCodeToFirstLine(Match matchFunc, string content, ref bool hasChange)
     {
-        Match mathcLeftBrace = LeftBraceRegex.Match(content, matchFunc.Index, matchFunc.Length);
+        Match mathcLeftBrace = ms_regexLeftBrace.Match(content, matchFunc.Index, matchFunc.Length);
         if (mathcLeftBrace.Success)
         {
             int len = matchFunc.Index + matchFunc.Length - (mathcLeftBrace.Index + mathcLeftBrace.Length);
-            Match matchFirstCode = FirstCodeRegex.Match(content, mathcLeftBrace.Index + mathcLeftBrace.Length, len);
-            if (!LogTrackCodeRegex.IsMatch(matchFirstCode.Value))
+            Match matchFirstCode = ms_regexFirstCode.Match(content, mathcLeftBrace.Index + mathcLeftBrace.Length, len);
+            if (!ms_regexLogTrackCode.IsMatch(matchFirstCode.Value))
             {
-                if (!LogTrackCodeIgnoreRegex.IsMatch(matchFirstCode.Value))
+                if (!ms_regexLogTrackCodeIgnore.IsMatch(matchFirstCode.Value))
                 {
-                    Match mathcFunHead = FunctionHeadRegex.Match(content, matchFunc.Index, matchFunc.Length);
+                    Match mathcFunHead = ms_regexFunctionHead.Match(content, matchFunc.Index, matchFunc.Length);
                     string code = GetInsertCode(mathcFunHead.ToString());
                     content = content.Insert(mathcLeftBrace.Index + mathcLeftBrace.Length, code);
                     hasChange = true;
@@ -143,21 +146,42 @@ public class AutoInstertEditor
         int len = firstLine.Length - idx - 2;
         string paramsStr = firstLine.Substring(idx + 1, len);
         string[] paramsArr = paramsStr.Split(',');
-        foreach(string p in paramsArr)
+        foreach(string str in paramsArr)
         {
-            int cur = 0;
-            while (cur < p.Length && p[cur] == ' ') ++cur;
-            int start = cur;
-            while (cur < p.Length && p[cur] != ' ') ++cur;
-            string pType = p.Substring(start, cur - start);
-            while (cur < p.Length && p[cur] == ' ') ++cur;
-            string pValName = p.Substring(cur);
+            int pos = 0;
+            string pType = GetFuncType(str, ref pos);
             if (pType == "int" || pType == "long"|| pType == "Fix64")
             {
+                string pValName = GetParamName(str, ref pos);
                 ParamClass pc = new ParamClass(pType, pValName);
                 list.Add(pc);
             }
         }
         return list;
+    }
+
+    private static string GetFuncType(string str, ref int pos)
+    {
+        while (pos < str.Length && str[pos] == ' ') ++pos;
+        int start = pos;
+        while (pos < str.Length && str[pos] != ' ') ++pos;
+        string res = str.Substring(start, pos - start);
+        if(res == "ref" || res == "out")
+            res = "invaild";
+        return res;
+    }
+
+    private static string GetParamName(string str, ref int pos)
+    {
+        while (pos < str.Length && str[pos] == ' ') ++pos;
+        int start = pos;
+        while (pos < str.Length && str[pos] != ' ' && str[pos] != ')' && str[pos] != ',' && str[pos] != '=') ++pos;
+        string res = str.Substring(start, pos - start);
+        return res;
+    }
+
+    private static void HandleLogTrack(string path)
+    {
+
     }
 }
