@@ -16,12 +16,17 @@ public class AutoInstertEditor
     private const string FIRST_CODE_REGEX = @"\S+(.)*";
     private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*)";
     private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack()";
+    private const string NUMBER_REGEX = @"\d+";
+
     private static Regex ms_regexFunction;
     private static Regex ms_regexFunctionHead;
     private static Regex ms_regexLeftBrace;
     private static Regex ms_regexFirstCode;
     private static Regex ms_regexLogTrackCode;
     private static Regex ms_regexLogTrackCodeIgnore;
+    private static Regex ms_regexxNumber;
+
+    private static string ms_basePath;
 
     [MenuItem("AutoInsert/自动插入日志代码")]
     public static void InsertAction()
@@ -32,9 +37,10 @@ public class AutoInstertEditor
         ms_regexFirstCode = new Regex(FIRST_CODE_REGEX);
         ms_regexLogTrackCode = new Regex(LOG_TRACK_CODE_REGEX);
         ms_regexLogTrackCodeIgnore = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
+        ms_regexxNumber = new Regex(NUMBER_REGEX);
 
-        string filePath = Application.dataPath + "/" + CODE_FILE_ROOT;
-        DirectoryInfo root = new DirectoryInfo(filePath);
+        ms_basePath = Application.dataPath + "/" + CODE_FILE_ROOT;
+        DirectoryInfo root = new DirectoryInfo(ms_basePath);
         List<FileInfo> fileInfoList = new List<FileInfo>();
         ForeachDir(fileInfoList, root);
 
@@ -46,6 +52,12 @@ public class AutoInstertEditor
         foreach (FileInfo file in fileInfoList)
         {
             HandleLogTrack(file.FullName);
+        }
+
+        LogTrackPdbFile pdb = new LogTrackPdbFile();
+        foreach (FileInfo file in fileInfoList)
+        {
+            HashLogTrackCode(file.FullName, pdb);
         }
     }
 
@@ -183,5 +195,42 @@ public class AutoInstertEditor
     private static void HandleLogTrack(string path)
     {
 
+    }
+
+    private static void HashLogTrackCode(string path, LogTrackPdbFile pdb)
+    {
+        bool hasChanged = false;
+        if (!File.Exists(path))
+            return;
+        var lines = File.ReadAllLines(path);
+        for (int i = 0; i < lines.Length; ++i)
+        {
+            var line = lines[i];
+            var matchLogCode = ms_regexLogTrackCode.Match(line);
+            if (matchLogCode.Success)
+            {
+                var matchLogHash = ms_regexxNumber.Match(line, matchLogCode.Index, matchLogCode.Length);
+                if (matchLogHash.Success)
+                {
+                    int hash = 0;
+                    int.TryParse(matchLogHash.Value, out hash);
+                    int argCnt = GetLogTrackArgCnt(matchLogCode.Value);
+                    //寻找可能的注释
+                    var dbgStr = GetLogTrackDebguString(ref line, matchLogCode.Index + matchLogCode.Length);
+
+                    int vaildHash = pdb.AddItem(hash, argCnt, path, i + 1, dbgStr);
+                }
+            }
+        }
+    }
+
+    private static int GetLogTrackArgCnt(string str)
+    {
+        return 0;
+    }
+
+    private static string GetLogTrackDebguString(ref string line, int index)
+    {
+        return "";
     }
 }
