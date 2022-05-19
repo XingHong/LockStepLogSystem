@@ -39,7 +39,9 @@ public class AutoInstertEditor
         ms_regexLogTrackCodeIgnore = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
         ms_regexxNumber = new Regex(NUMBER_REGEX);
 
-        ms_basePath = Application.dataPath + "/" + CODE_FILE_ROOT;
+        ms_basePath = Path.Combine(Application.dataPath, CODE_FILE_ROOT);
+        ms_basePath = ms_basePath.Replace("/", "\\");
+
         DirectoryInfo root = new DirectoryInfo(ms_basePath);
         List<FileInfo> fileInfoList = new List<FileInfo>();
         ForeachDir(fileInfoList, root);
@@ -91,8 +93,8 @@ public class AutoInstertEditor
         }
         if (hasChange)
         { 
-            Debug.Log(res);
-            // File.WriteAllText(path, res);
+            //Debug.Log(res);
+            File.WriteAllText(path, res);
         }
     }
 
@@ -146,8 +148,6 @@ public class AutoInstertEditor
         char[] arr = funName.ToCharArray();
         Array.Reverse(arr);
         funName = new string(arr);
-
-        GetParams(firstLine);
         return funName;
     }
 
@@ -203,6 +203,7 @@ public class AutoInstertEditor
         if (!File.Exists(path))
             return;
         var lines = File.ReadAllLines(path);
+        var subPath = path.Replace(ms_basePath + "\\", "");
         for (int i = 0; i < lines.Length; ++i)
         {
             var line = lines[i];
@@ -218,15 +219,29 @@ public class AutoInstertEditor
                     //Ñ°ÕÒ¿ÉÄÜµÄ×¢ÊÍ
                     var dbgStr = GetLogTrackDebguString(ref line, matchLogCode.Index + matchLogCode.Length);
 
-                    int vaildHash = pdb.AddItem(hash, argCnt, path, i + 1, dbgStr);
+                    int vaildHash = pdb.AddItem(hash, argCnt, subPath, i + 1, dbgStr);
+                    if (hash != vaildHash)
+                    {
+                        line = line.Remove(matchLogHash.Index, matchLogHash.Length);
+                        line = line.Insert(matchLogHash.Index, vaildHash.ToString());
+
+                        lines[i] = line;
+                        hasChanged = true;
+                    }
                 }
             }
+        }
+        if (hasChanged)
+        {
+            Debug.Log(lines);
+            //File.WriteAllLines(path, lines);
         }
     }
 
     private static int GetLogTrackArgCnt(string str)
     {
-        return 0;
+        var tmp = str.Split(',');
+        return tmp.Length;
     }
 
     private static string GetLogTrackDebguString(ref string line, int index)
