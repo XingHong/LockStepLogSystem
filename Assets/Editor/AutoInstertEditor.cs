@@ -14,17 +14,18 @@ public class AutoInstertEditor
     private const string FUNCTION_HEAD_REGEX = @"(public|private|protected)((\s+(static|override|virtual)*\s+)|\s+)\w+(<\w+>)*(\[\])*\s+\w+(<\w+>)*\s*\(([^\)]+\s*)?\)";
     private const string LEFT_BRACE_REGEX = @"{";
     private const string FIRST_CODE_REGEX = @"\S+(.)*";
-    private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*)";
-    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack()";
+    private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*);";
+    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack();";
     private const string NUMBER_REGEX = @"\d+";
-
+    private const string DEBUG_STR_REGEX = @"(/#(.)*#/)|(/\*(.)*\*/)";
     private static Regex ms_regexFunction;
     private static Regex ms_regexFunctionHead;
     private static Regex ms_regexLeftBrace;
     private static Regex ms_regexFirstCode;
     private static Regex ms_regexLogTrackCode;
     private static Regex ms_regexLogTrackCodeIgnore;
-    private static Regex ms_regexxNumber;
+    private static Regex ms_regexNumber;
+    private static Regex ms_regexDebugStr;
 
     private static string ms_basePath;
 
@@ -37,7 +38,8 @@ public class AutoInstertEditor
         ms_regexFirstCode = new Regex(FIRST_CODE_REGEX);
         ms_regexLogTrackCode = new Regex(LOG_TRACK_CODE_REGEX);
         ms_regexLogTrackCodeIgnore = new Regex(LOG_TRACK_CODE_IGNORE_REGEX);
-        ms_regexxNumber = new Regex(NUMBER_REGEX);
+        ms_regexNumber = new Regex(NUMBER_REGEX);
+        ms_regexDebugStr = new Regex(DEBUG_STR_REGEX);
 
         ms_basePath = Path.Combine(Application.dataPath, CODE_FILE_ROOT);
         ms_basePath = ms_basePath.Replace("/", "\\");
@@ -133,6 +135,7 @@ public class AutoInstertEditor
         }
         res = res.Remove(res.Length-1);
         res += ");";
+        res += $"/#{funName}#/";
         return res;
     }
 
@@ -210,7 +213,7 @@ public class AutoInstertEditor
             var matchLogCode = ms_regexLogTrackCode.Match(line);
             if (matchLogCode.Success)
             {
-                var matchLogHash = ms_regexxNumber.Match(line, matchLogCode.Index, matchLogCode.Length);
+                var matchLogHash = ms_regexNumber.Match(line, matchLogCode.Index, matchLogCode.Length);
                 if (matchLogHash.Success)
                 {
                     int hash = 0;
@@ -218,7 +221,6 @@ public class AutoInstertEditor
                     int argCnt = GetLogTrackArgCnt(matchLogCode.Value);
                     //Ñ°ÕÒ¿ÉÄÜµÄ×¢ÊÍ
                     var dbgStr = GetLogTrackDebguString(ref line, matchLogCode.Index + matchLogCode.Length);
-
                     int vaildHash = pdb.AddItem(hash, argCnt, subPath, i + 1, dbgStr);
                     if (hash != vaildHash)
                     {
@@ -246,6 +248,11 @@ public class AutoInstertEditor
 
     private static string GetLogTrackDebguString(ref string line, int index)
     {
-        return "";
+        var res = ms_regexDebugStr.Match(line, index);
+        line = line.Substring(0, index);
+        int len = res.Value.Length;
+        if (res.Success)
+            return res.Value.Substring(2, len - 4);
+        return string.Empty;
     }
 }
