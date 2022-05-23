@@ -63,6 +63,7 @@ public class AutoInstertEditor
         {
             HashLogTrackCode(file.FullName, pdb);
         }
+        pdb.SavePdb();
     }
 
     /// <summary>
@@ -95,7 +96,6 @@ public class AutoInstertEditor
         }
         if (hasChange)
         { 
-            //Debug.Log(res);
             File.WriteAllText(path, res);
         }
     }
@@ -235,8 +235,7 @@ public class AutoInstertEditor
         }
         if (hasChanged)
         {
-            Debug.Log(lines);
-            //File.WriteAllLines(path, lines);
+            File.WriteAllLines(path, lines);
         }
     }
 
@@ -252,7 +251,10 @@ public class AutoInstertEditor
         line = line.Substring(0, index);
         int len = res.Value.Length;
         if (res.Success)
-            return res.Value.Substring(2, len - 4);
+        { 
+            var str = "<" + res.Value.Substring(2, len - 4) + ">";
+            return str;
+        }
         return string.Empty;
     }
 }
