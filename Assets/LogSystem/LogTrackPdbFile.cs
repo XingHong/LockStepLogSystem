@@ -46,23 +46,20 @@ public class LogTrackPdbFile
 
     private List<string> Split(string line)
     {
-        int markCount = 0;
+        int markCount = 4;
         List<string> res = new List<string>();
         string str = string.Empty;
         for (int i = 0; i < line.Length; ++i)
         {
             char ch = line[i];
-            if (ch == ',' && markCount == 0)
+            if (ch == ',' && markCount > 0)
             {
                 res.Add(str);
                 str = string.Empty;
+                --markCount;
             }
             else
             {
-                if (ch == '<')
-                    ++markCount;
-                if (ch == '>')
-                    --markCount;
                 str += ch;
             }
         }

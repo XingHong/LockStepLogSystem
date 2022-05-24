@@ -252,8 +252,7 @@ public class AutoInstertEditor
         int len = res.Value.Length;
         if (res.Success)
         { 
-            var str = "<" + res.Value.Substring(2, len - 4) + ">";
-            return str;
+            return res.Value.Substring(2, len - 4);
         }
         return string.Empty;
     }
