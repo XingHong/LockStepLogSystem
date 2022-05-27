@@ -206,7 +206,7 @@ public class AutoInstertEditor
         if (!File.Exists(path))
             return;
         var lines = File.ReadAllLines(path);
-        var subPath = path.Replace(ms_basePath + "\\", "");
+        var subPath = Path.GetFileNameWithoutExtension(path);
         for (int i = 0; i < lines.Length; ++i)
         {
             var line = lines[i];
@@ -242,13 +242,16 @@ public class AutoInstertEditor
     private static int GetLogTrackArgCnt(string str)
     {
         var tmp = str.Split(',');
-        return tmp.Length;
+        return tmp.Length - 1;
     }
 
     private static string GetLogTrackDebguString(ref string line, int index)
     {
         var res = ms_regexDebugStr.Match(line, index);
-        line = line.Substring(0, index);
+        if (!line.Contains("/*"))
+        { 
+            line = line.Substring(0, index);
+        }
         int len = res.Value.Length;
         if (res.Success)
         { 
