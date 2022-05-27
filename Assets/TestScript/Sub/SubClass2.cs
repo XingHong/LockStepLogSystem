@@ -2,17 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SubClass2 : MonoBehaviour
+public class SubClass2 : SubClass
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
+    public override void Test1()
+    {FSPDebuger.IgnoreTrack();
+        Debug.Log("sb2, Test!!!");
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void Test2(int a)
     {
-        
+        FSPDebuger.LogTrack(14, a);/*test2 in subclass2*/
     }
 }
