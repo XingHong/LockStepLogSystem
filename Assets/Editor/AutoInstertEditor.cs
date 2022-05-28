@@ -15,7 +15,7 @@ public class AutoInstertEditor
     private const string LEFT_BRACE_REGEX = @"{";
     private const string FIRST_CODE_REGEX = @"\S+(.)*";
     private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*);";
-    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack();";
+    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger\.IgnoreTrack\(\);";
     private const string NUMBER_REGEX = @"\d+";
     private const string DEBUG_STR_REGEX = @"(/#(.)*#/)|(/\*(.)*\*/)";
     private static Regex ms_regexFunction;

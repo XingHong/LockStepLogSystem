@@ -5,7 +5,8 @@ using UnityEngine;
 public class SubClass2 : SubClass
 {
     public override void Test1()
-    {FSPDebuger.IgnoreTrack();
+    {
+        FSPDebuger.IgnoreTrack();
         Debug.Log("sb2, Test!!!");
     }
 
