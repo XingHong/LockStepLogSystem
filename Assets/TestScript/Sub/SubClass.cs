@@ -1,18 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-public class SubClass : MonoBehaviour
+public class SubClass
 {
-    // Start is called before the first frame update
-    void Start()
+    protected int t1;
+    public virtual void Test1()
     {
-        
     }
 
-    // Update is called once per frame
-    void Update()
+    public virtual void Test2(int a)
     {
-        
+        t1 = a;
     }
 }

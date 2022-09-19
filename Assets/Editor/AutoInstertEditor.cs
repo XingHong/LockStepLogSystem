@@ -5,6 +5,7 @@ using UnityEditor;
 using System.IO;
 using System.Text.RegularExpressions;
 using System;
+using System.Linq;
 
 public class AutoInstertEditor
 {
@@ -15,7 +16,7 @@ public class AutoInstertEditor
     private const string LEFT_BRACE_REGEX = @"{";
     private const string FIRST_CODE_REGEX = @"\S+(.)*";
     private const string LOG_TRACK_CODE_REGEX = @"FSPDebuger.LogTrack((.)*);";
-    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger.IgnoreTrack();";
+    private const string LOG_TRACK_CODE_IGNORE_REGEX = @"FSPDebuger\.IgnoreTrack\(\);";
     private const string NUMBER_REGEX = @"\d+";
     private const string DEBUG_STR_REGEX = @"(/#(.)*#/)|(/\*(.)*\*/)";
     private static Regex ms_regexFunction;
@@ -48,22 +49,63 @@ public class AutoInstertEditor
         List<FileInfo> fileInfoList = new List<FileInfo>();
         ForeachDir(fileInfoList, root);
 
-        foreach (FileInfo file in fileInfoList)
+        List<string> excludeDirectory = GetExcludeDirectoryList();
+        List<string> excludeFile = GetExcludeFileList();
+        List<FileInfo> filterFiles = new List<FileInfo>();
+        foreach (FileInfo item in fileInfoList.Where(item => !GetFilterFiles(excludeDirectory, excludeFile, item)))
+        {
+            filterFiles.Add(item);
+        }
+
+        foreach (FileInfo file in filterFiles)
         {
             IntertLogTrackCode(file.FullName);
         }
 
-        foreach (FileInfo file in fileInfoList)
+        foreach (FileInfo file in filterFiles)
         {
             HandleLogTrack(file.FullName);
         }
 
         LogTrackPdbFile pdb = new LogTrackPdbFile();
-        foreach (FileInfo file in fileInfoList)
+        foreach (FileInfo file in filterFiles)
         {
             HashLogTrackCode(file.FullName, pdb);
         }
         pdb.SavePdb();
+    }
+
+    /// <summary>
+    /// 过滤文件夹和文件
+    /// </summary>
+    /// <param name="excludeDirectory"></param>
+    /// <param name="excludeFile"></param>
+    /// <param name="target"></param>
+    /// <returns></returns>
+    public static bool GetFilterFiles(List<string> excludeDirectory, List<string> excludeFile, FileInfo target)
+    {
+        string direct = target.Directory.ToString();
+        string[] ds = direct.Split('\\');
+        bool isExcludeDirectory = excludeDirectory.Any(p => ds.Any(q => p == q));
+        string fileName = Path.GetFileNameWithoutExtension(target.Name);
+        bool isExcludeFile = excludeFile.Any(p => fileName == p);
+        return isExcludeDirectory || isExcludeFile;
+    }
+
+    public static List<string> GetExcludeDirectoryList()
+    {
+        return new List<String>
+        {
+            "Other",
+        };
+    }
+
+    public static List<string> GetExcludeFileList()
+    {
+        return new List<String>
+        {
+            "SubClass3",
+        };
     }
 
     /// <summary>
@@ -206,7 +248,7 @@ public class AutoInstertEditor
         if (!File.Exists(path))
             return;
         var lines = File.ReadAllLines(path);
-        var subPath = path.Replace(ms_basePath + "\\", "");
+        var subPath = Path.GetFileNameWithoutExtension(path);
         for (int i = 0; i < lines.Length; ++i)
         {
             var line = lines[i];
@@ -242,13 +284,16 @@ public class AutoInstertEditor
     private static int GetLogTrackArgCnt(string str)
     {
         var tmp = str.Split(',');
-        return tmp.Length;
+        return tmp.Length - 1;
     }
 
     private static string GetLogTrackDebguString(ref string line, int index)
     {
         var res = ms_regexDebugStr.Match(line, index);
-        line = line.Substring(0, index);
+        if (!line.Contains("/*"))
+        { 
+            line = line.Substring(0, index);
+        }
         int len = res.Value.Length;
         if (res.Success)
         { 

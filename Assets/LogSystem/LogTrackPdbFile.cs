@@ -95,25 +95,37 @@ public class LogTrackPdbFile
     {
         int cur = hash;
         LogTrackInfoItem item;
-        if (hash != 0 && m_oldTableId.Contains(hash) && !m_updateTableId.Contains(hash))
+        if (hash != 0 && !m_updateTableId.Contains(hash))
         {
-            item = m_logDict[hash];
-            item.UpdateItem(hash, argCnt, subPath, line, dbgStr);
-            if (!m_hasChange && item.HasChange())
+            if (m_logDict.ContainsKey(hash))
             {
+                item = m_logDict[hash];
+                item.UpdateItem(hash, argCnt, subPath, line, dbgStr);
+                if (!m_hasChange && item.HasChange())
+                {
+                    m_hasChange = true;
+                }
+            }
+            else
+            {
+                cur = CreateNewItem(argCnt, subPath, line, dbgStr);
                 m_hasChange = true;
             }
         }
         else
         {
-            int newId = GetNextHashId();
-            cur = newId;
-            item = new LogTrackInfoItem(newId, argCnt, subPath, line, dbgStr);
-            m_logDict[newId] = item;
+            cur = CreateNewItem(argCnt, subPath, line, dbgStr);
             m_hasChange = true;
         }
         m_updateTableId.Add(cur);
         return cur;
+    }
+    private int CreateNewItem(int argCnt, string subPath, int line, string dbgStr)
+    {
+        int newId = GetNextHashId();
+        LogTrackInfoItem item = new LogTrackInfoItem(newId, argCnt, subPath, line, dbgStr);
+        m_logDict[newId] = item;
+        return newId;
     }
 
 
