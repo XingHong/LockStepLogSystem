@@ -73,6 +73,7 @@ public class AutoInstertEditor
             HashLogTrackCode(file.FullName, pdb);
         }
         pdb.SavePdb();
+        Debug.Log("Finish Insert.");
     }
 
     /// <summary>
