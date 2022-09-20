@@ -58,7 +58,7 @@ public class CircularQueue<T>
         return elements[front];
     }
 
-    public T RearTtem()
+    public T RearItem()
     {
         if (IsEmpty())
             throw new ArgumentOutOfRangeException("circular queue is empty.");  
