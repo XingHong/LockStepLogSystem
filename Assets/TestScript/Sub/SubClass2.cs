@@ -14,4 +14,10 @@ public class SubClass2 : SubClass
     {
         FSPDebuger.LogTrack(14, a);/*test2 in subclass2*/
     }
+
+}
+
+public abstract class AbstractClass
+{
+    public abstract void Test(int v1, int v2);
 }
