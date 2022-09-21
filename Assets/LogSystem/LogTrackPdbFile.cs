@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System;
 
 
 public class LogTrackPdbFile
@@ -42,6 +43,13 @@ public class LogTrackPdbFile
             m_logDict[hashId] = item;
             m_oldTableId.Add(hashId);
         }
+    }
+
+    public LogTrackInfoItem GetInfoItem(int id)
+    {
+        if (!m_logDict.ContainsKey(id))
+            throw new ArgumentOutOfRangeException($"pdb id {id} is null.");
+        return m_logDict[id];
     }
 
     private List<string> Split(string line)

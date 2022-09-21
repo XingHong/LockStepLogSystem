@@ -36,4 +36,44 @@ public class LogTrackInfoItem
     {
         return $"{m_hashId},{m_argCnt},{m_subPath},{m_line},{m_dbgStr}";
     }
+
+    public int HashId
+    {
+        get
+        {
+            return m_hashId;
+        }
+    }
+
+    public int ArgCnt
+    {
+        get
+        {
+            return m_argCnt;
+        }
+    }
+
+    public string SubPath
+    {
+        get
+        {
+            return m_subPath;
+        }
+    }
+
+    public int Line
+    {
+        get
+        {
+            return m_line;
+        }
+    }
+
+    public string DbgStr
+    {
+        get
+        {
+            return m_dbgStr;
+        }
+    }
 }
