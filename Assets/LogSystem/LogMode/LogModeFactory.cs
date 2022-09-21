@@ -21,6 +21,6 @@ public class LogModeFactory
             res = new AllMode();
             break;
         }
-        return null;
+        return res;
     }
 }

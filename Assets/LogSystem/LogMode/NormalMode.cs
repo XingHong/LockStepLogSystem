@@ -37,6 +37,8 @@ public class NormalMode : ILockStepLog
         if (m_logTrackLoopQueue.IsFull())
             m_logTrackLoopQueue.Dequeue();
         m_currFrame = m_logTrackLoopQueue.GetNextItem();
+        if (m_currFrame == null)
+            m_currFrame = new LogTrackFrame(frameIndex);
         m_items = m_currFrame.m_items;
         m_items.Clear();
         m_args = m_currFrame.m_args;

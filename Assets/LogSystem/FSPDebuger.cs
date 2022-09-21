@@ -11,6 +11,7 @@ public class FSPDebuger
     {
         ms_pdb = new LogTrackPdbFile();
         ms_log = LogModeFactory.GetLog(LogMode.Normal);
+        ms_log.BeginTrack();
     }
 
     public static void EndTrack()
@@ -31,8 +32,8 @@ public class FSPDebuger
 
     public static void LogTrack(ushort hashId)
     {
-        var item = ms_pdb.GetInfoItem(hashId);
-        Debug.Log($"[hash:{1}]");
+        // var item = ms_pdb.GetInfoItem(hashId);
+        // Debug.Log($"[hash:{1}]");
         ms_log.LogTrack(hashId);
     }
 
