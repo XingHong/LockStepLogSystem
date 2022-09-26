@@ -28,6 +28,7 @@ public class AllMode : ILockStepLog
         var nowTime = DateTime.Now.ToString("yy_MM_dd_HH_mm_ss_ff");
         m_outputPath = Application.dataPath + $"/TrackLog_{nowTime}.txt";
         File.WriteAllText(m_outputPath, m_sb.ToString());
+        m_sb.Clear();
     }
 
     public void SaveTrack()
