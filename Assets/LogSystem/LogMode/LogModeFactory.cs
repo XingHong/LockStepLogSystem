@@ -12,14 +12,14 @@ public class LogModeFactory
         switch(ltype)
         {
             case LogMode.None:
-            res = new NoneMode();
-            break;
+                res = new NoneMode();
+                break;
             case LogMode.Normal:
-            res = new NormalMode();
-            break;
+                res = new NormalMode();
+                break;
             case LogMode.All:
-            res = new AllMode();
-            break;
+                res = new AllMode();
+                break;
         }
         return res;
     }

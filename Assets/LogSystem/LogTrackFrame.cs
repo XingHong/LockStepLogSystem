@@ -15,4 +15,9 @@ public class LogTrackFrame
         m_args = new List<long>(LEN);
     }
 
+    public void SetFrameIndex(int index)
+    {
+        m_frameIndex = index;
+    }
+
 }

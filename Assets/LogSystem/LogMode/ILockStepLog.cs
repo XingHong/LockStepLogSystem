@@ -3,6 +3,7 @@ public interface ILockStepLog
     void BeginTrack();
     void EndTrack();
     void SaveTrack();
+    long GetCheckSum();
     void EnterTrackFrame(int frameIndex);
     void LogTrack(ushort hashId);
     void LogTrack(ushort hashId, long arg1);

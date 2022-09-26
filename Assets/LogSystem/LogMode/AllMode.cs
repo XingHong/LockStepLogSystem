@@ -1,5 +1,6 @@
 public class AllMode : ILockStepLog
 {
+    private long m_checksum;
     public AllMode()
     {
 
@@ -9,14 +10,22 @@ public class AllMode : ILockStepLog
     {
         
     }
+
     public void EndTrack()
     {
 
     }
+
     public void SaveTrack()
     {
 
     }
+
+    public long GetCheckSum()
+    {
+        return m_checksum;
+    }
+
     public void EnterTrackFrame(int frameIndex)
     {
 

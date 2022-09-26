@@ -32,6 +32,11 @@ public class NormalMode : ILockStepLog
         m_logTrackLoopQueue.Enqueue(m_currFrame);
     }
 
+    public long GetCheckSum()
+    {
+        return m_checksum;
+    }
+
     public void EnterTrackFrame(int frameIndex)
     {
         if (m_logTrackLoopQueue.IsFull())
@@ -39,6 +44,8 @@ public class NormalMode : ILockStepLog
         m_currFrame = m_logTrackLoopQueue.GetNextItem();
         if (m_currFrame == null)
             m_currFrame = new LogTrackFrame(frameIndex);
+        else
+            m_currFrame.SetFrameIndex(frameIndex);
         m_items = m_currFrame.m_items;
         m_items.Clear();
         m_args = m_currFrame.m_args;
