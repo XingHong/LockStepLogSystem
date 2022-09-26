@@ -1,14 +1,19 @@
 using UnityEngine;
 using System.IO;
+using System;
+using System.Text;
 
 public class AllMode : ILockStepLog
 {
     private LogTrackPdbFile ms_pdb;
     private long m_checksum;
     private string m_outputPath;
+    private StringBuilder m_sb;
+
     public AllMode()
     {
         ms_pdb = new LogTrackPdbFile();
+        m_sb = new StringBuilder();
     }
     
     public void BeginTrack()
@@ -18,7 +23,11 @@ public class AllMode : ILockStepLog
 
     public void EndTrack()
     {
-
+        string str = $"EndTrack hash:{m_checksum}";
+        DoLog(str);
+        var nowTime = DateTime.Now.ToString("yy_MM_dd_HH_mm_ss_ff");
+        m_outputPath = Application.dataPath + $"/TrackLog_{nowTime}.txt";
+        File.WriteAllText(m_outputPath, m_sb.ToString());
     }
 
     public void SaveTrack()
@@ -33,13 +42,22 @@ public class AllMode : ILockStepLog
 
     public void EnterTrackFrame(int frameIndex)
     {
-        Debug.Log($"EnterTrackFrame:{frameIndex}, hash:{m_checksum}");
+        string str = $"EnterTrackFrame:{frameIndex}, hash:{m_checksum}";
+        DoLog(str);
     }
 
     private void Print(ushort hashId)
     {
         var item = ms_pdb.GetInfoItem(hashId);
-        Debug.Log($"[hash:{m_checksum}]{item.DbgStr}(argCnt:{item.ArgCnt})(at {item.SubPath}:{item.Line})");
+        string str = $"[hash:{m_checksum}]{item.DbgStr}(argCnt:{item.ArgCnt})(at {item.SubPath}:{item.Line})";
+        DoLog(str);
+    }
+
+    private void DoLog(string str)
+    {
+        m_sb.Append(str);
+        m_sb.AppendLine();
+        Debug.Log(str);
     }
 
     public void LogTrack(ushort hashId)
