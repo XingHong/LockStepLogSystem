@@ -211,6 +211,8 @@ public class AutoInstertEditor
             if (pType == "int" || pType == "long"|| pType == "Fix64")
             {
                 string pValName = GetParamName(str, ref pos);
+                if (pType == "Fix64")
+                    pValName = $"{pValName}.RawValue";
                 ParamClass pc = new ParamClass(pType, pValName);
                 list.Add(pc);
             }
