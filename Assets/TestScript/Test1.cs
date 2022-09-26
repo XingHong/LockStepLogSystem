@@ -46,4 +46,9 @@ public class Test1
     {
         v1 = 45;
     }
+
+    public void TestFix64(Fix64 f)
+    {
+
+    }
 }
