@@ -33,5 +33,6 @@ public class FSPDebugerTest : MonoBehaviour
     {
         var t = new Test1();
         t.SetA1(999);
+        Test1.TestStatic();
     }
 }

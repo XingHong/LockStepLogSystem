@@ -3,14 +3,11 @@ using UnityEngine;
 
 public class FSPDebuger
 {
-    private static LogTrackPdbFile ms_pdb;
-
     private static ILockStepLog ms_log;
 
     public static void BeginTrack()
     {
-        ms_pdb = new LogTrackPdbFile();
-        ms_log = LogModeFactory.GetLog(LogMode.Normal);
+        ms_log = LogModeFactory.GetLog(LogMode.All);
         ms_log.BeginTrack();
     }
 
@@ -32,8 +29,6 @@ public class FSPDebuger
 
     public static void LogTrack(ushort hashId)
     {
-        // var item = ms_pdb.GetInfoItem(hashId);
-        // Debug.Log($"[hash:{1}]");
         ms_log.LogTrack(hashId);
     }
 

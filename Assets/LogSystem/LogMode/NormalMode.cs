@@ -56,7 +56,6 @@ public class NormalMode : ILockStepLog
     {
         m_checksum += hashId;
         m_items.Add(hashId);
-
     }
 
     public void LogTrack(ushort hashId, long arg1)

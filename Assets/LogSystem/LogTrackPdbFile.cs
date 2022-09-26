@@ -128,6 +128,7 @@ public class LogTrackPdbFile
         m_updateTableId.Add(cur);
         return cur;
     }
+    
     private int CreateNewItem(int argCnt, string subPath, int line, string dbgStr)
     {
         int newId = GetNextHashId();
@@ -135,6 +136,4 @@ public class LogTrackPdbFile
         m_logDict[newId] = item;
         return newId;
     }
-
-
 }
