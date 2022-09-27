@@ -7,7 +7,7 @@ public class FSPDebuger
 
     public static void BeginTrack()
     {
-        ms_log = LogModeFactory.GetLog(LogMode.All);
+        ms_log = LogModeFactory.GetLog(LogMode.CHECK);
         ms_log.BeginTrack();
     }
 

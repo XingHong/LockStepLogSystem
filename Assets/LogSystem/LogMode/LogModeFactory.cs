@@ -1,8 +1,8 @@
 public enum LogMode
 {
-    None = 0,
-    Normal,
-    All
+    PC,
+    PVP,
+    CHECK
 }
 public class LogModeFactory
 {
@@ -11,14 +11,14 @@ public class LogModeFactory
         ILockStepLog res = null;
         switch(ltype)
         {
-            case LogMode.None:
-                res = new NoneMode();
+            case LogMode.PC:
+                res = new PCMode();
                 break;
-            case LogMode.Normal:
-                res = new NormalMode();
+            case LogMode.PVP:
+                res = new PVPMode();
                 break;
-            case LogMode.All:
-                res = new AllMode();
+            case LogMode.CHECK:
+                res = new CheckMode();
                 break;
         }
         return res;
