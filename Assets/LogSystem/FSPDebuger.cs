@@ -62,6 +62,13 @@ public class FSPDebuger
         ms_log.LogTrack(hashId, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
+    public static long GetCheckSum()
+    {
+        if (ms_log != null)
+            return ms_log.GetCheckSum();
+        return -1;
+    }
+
     public static void IgnoreTrack()
     { 
     }
