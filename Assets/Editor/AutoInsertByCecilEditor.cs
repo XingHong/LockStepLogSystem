@@ -5,8 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEditor.Callbacks;
-using System.Linq;
+using Mono.Collections.Generic;
  
 public class AutoInsertByCecilEditor 
 {
@@ -47,22 +46,24 @@ public class AutoInsertByCecilEditor
             {
                 readerParameters.ReadSymbols = true;
                 readerParameters.SymbolReaderProvider = new Mono.Cecil.Pdb.PdbReaderProvider();
+                readerParameters.ReadWrite = true;
                 writerParameters.WriteSymbols = true;
                 writerParameters.SymbolWriterProvider = new Mono.Cecil.Pdb.PdbWriterProvider();
  
                 AssemblyDefinition assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
- 
                 Debug.Log("Processing " + Path.GetFileName(assemblyPath));
                 if (AutoInsertByCecilEditor.ProcessAssembly(assemblyDefinition))
                 {
                     Debug.Log("Writing to " + assemblyPath);
-                    assemblyDefinition.Write(assemblyPath, writerParameters);
-                    Debug.Log("Done writing");
+                    // assemblyDefinition.Write(assemblyPath, writerParameters);
+                    assemblyDefinition.Write(assemblyPath + ".backup");
+                    Debug.Log("Done writing");  
                 }
                 else
                 {
                     Debug.Log(Path.GetFileName(assemblyPath) + " didn't need to be processed");
                 }
+                assemblyDefinition.Dispose();
             }
         }
         catch (Exception e)
@@ -90,27 +91,40 @@ public class AutoInsertByCecilEditor
                     //过滤构造函数
                     if(methodDefinition.Name == ".ctor")continue;
                     if (methodDefinition.Name == ".cctor") continue;
-                    //过滤抽象方法、虚函数、get set 方法
+                    //过滤抽象方法,get set 方法
                     if (methodDefinition.IsAbstract) continue;
-                    if (methodDefinition.IsVirtual) continue;
                     if (methodDefinition.IsGetter) continue;
                     if (methodDefinition.IsSetter) continue;
                     //如果注入代码失败，可以打开下面的输出看看卡在了那个方法上。
-                    Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +typeDefinition.BaseType.GenericParameters +" ===== "+ moduleDefinition.Name);
+                    Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
                     MethodReference logMethodReference = moduleDefinition.ImportReference(typeof(FSPDebuger).GetMethod("IgnoreTrack", new Type[] { }));
  
-                    ILProcessor ilProcessor = methodDefinition.Body.GetILProcessor();
- 
-                    Instruction first = methodDefinition.Body.Instructions[0];
-                    ilProcessor.InsertBefore(first, Instruction.Create(OpCodes.Ldstr, typeDefinition.FullName + "." + methodDefinition.Name));
-                    ilProcessor.InsertBefore(first, Instruction.Create(OpCodes.Call, logMethodReference));
+                    var processor = methodDefinition.Body.GetILProcessor();
+                    var newInstruction = processor.Create(OpCodes.Call, logMethodReference);
+                    var firstInstruction = methodDefinition.Body.Instructions[0];
+                    processor.InsertBefore(firstInstruction, newInstruction);                    
  
                     wasProcessed = true;
                 }
             }
+            
         }
- 
         return wasProcessed;
     }
+
+    
+        private static string GetDebugParams(Collection<ParameterDefinition> param)
+        {
+            var items = param.items;
+			var size = param.size;
+            string res = "";
+            for (int i = 0; i < size; i++) {
+                var item = items[i];
+                res += $"{item.ParameterType} {item.Name} ,";
+            }
+            if (size > 0)
+                res = res.Remove(res.Length - 1, 1);
+            return res;
+        }
 }
  
