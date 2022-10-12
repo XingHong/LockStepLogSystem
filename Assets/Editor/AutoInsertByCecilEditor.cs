@@ -56,7 +56,7 @@ public class AutoInsertByCecilEditor
                 {
                     Debug.Log("Writing to " + assemblyPath);
                     // assemblyDefinition.Write(assemblyPath, writerParameters);
-                    assemblyDefinition.Write(assemblyPath + ".backup");
+                    assemblyDefinition.Write(assemblyPath + ".backup", writerParameters);
                     Debug.Log("Done writing");  
                 }
                 else
@@ -79,6 +79,7 @@ public class AutoInsertByCecilEditor
  
         foreach (ModuleDefinition moduleDefinition in assemblyDefinition.Modules)
         {
+            Debug.Log($"model:{moduleDefinition.Name}");
             foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
             {
                 if (typeDefinition.Name == typeof(AutoInsertByCecilEditor).Name) continue;
@@ -95,15 +96,19 @@ public class AutoInsertByCecilEditor
                     if (methodDefinition.IsAbstract) continue;
                     if (methodDefinition.IsGetter) continue;
                     if (methodDefinition.IsSetter) continue;
+                    //过滤掉已经有FSPDebuger操作的函数，没必要自动注入
+                    if (HasFSPDebuger(methodDefinition)) continue;
                     //如果注入代码失败，可以打开下面的输出看看卡在了那个方法上。
                     Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
-                    MethodReference logMethodReference = moduleDefinition.ImportReference(typeof(FSPDebuger).GetMethod("IgnoreTrack", new Type[] { }));
- 
-                    var processor = methodDefinition.Body.GetILProcessor();
-                    var newInstruction = processor.Create(OpCodes.Call, logMethodReference);
-                    var firstInstruction = methodDefinition.Body.Instructions[0];
-                    processor.InsertBefore(firstInstruction, newInstruction);                    
- 
+                    
+                    IntertLogTrackCode(moduleDefinition, methodDefinition);
+                    
+                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldc_I4_0));
+                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldarg_1));
+                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Conv_I8));
+                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Call, logMethodReference));
+                    // SequencePoint seqPoint = methodDefinition.DebugInformation.GetSequencePoint(firstInstruction);   //指令行数
+
                     wasProcessed = true;
                 }
             }
@@ -112,19 +117,46 @@ public class AutoInsertByCecilEditor
         return wasProcessed;
     }
 
-    
-        private static string GetDebugParams(Collection<ParameterDefinition> param)
-        {
-            var items = param.items;
-			var size = param.size;
-            string res = "";
-            for (int i = 0; i < size; i++) {
-                var item = items[i];
-                res += $"{item.ParameterType} {item.Name} ,";
-            }
-            if (size > 0)
-                res = res.Remove(res.Length - 1, 1);
-            return res;
+    private static string GetDebugParams(Collection<ParameterDefinition> param)
+    {
+        var items = param.items;
+        var size = param.size;
+        string res = "";
+        for (int i = 0; i < size; i++) {
+            var item = items[i];
+            res += $"{item.ParameterType} {item.Name} ,";
         }
+        if (size > 0)
+            res = res.Remove(res.Length - 1, 1);
+        return res;
+    }
+
+    private static bool HasFSPDebuger(MethodDefinition methodDefinition)
+    {
+        var processor = methodDefinition.Body.GetILProcessor();
+        foreach (var instruction in methodDefinition.Body.Instructions)
+        {
+            if (instruction.OpCode == OpCodes.Call)
+            {
+                MethodReference methodCall = instruction.Operand as MethodReference;
+                if(methodCall != null)
+                {
+                    string mfName = methodCall.MemberFullName();
+                    if (mfName == "FSPDebuger::LogTrack" || mfName == "FSPDebuger::IgnoreTrack")
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void IntertLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition)
+    {
+        var processor = methodDefinition.Body.GetILProcessor();
+        var firstInstruction = methodDefinition.Body.Instructions[0];
+        MethodReference logMethodReference = moduleDefinition.ImportReference(typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64)}));
+    }
 }
  
