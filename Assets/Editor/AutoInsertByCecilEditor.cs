@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using Mono.Collections.Generic;
+using System.Reflection;
  
 public class AutoInsertByCecilEditor 
 {
@@ -83,6 +84,11 @@ public class AutoInsertByCecilEditor
             foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
             {
                 if (typeDefinition.Name == typeof(AutoInsertByCecilEditor).Name) continue;
+                if (typeDefinition.Name == typeof(FSPDebuger).Name) continue;
+                if (typeDefinition.Name == typeof(CheckMode).Name) continue;
+                if (typeDefinition.Name == typeof(PVPMode).Name) continue;
+                if (typeDefinition.Name == typeof(PCMode).Name) continue;
+
                 //过滤抽象类
                 if (typeDefinition.IsAbstract) continue;
                 //过滤抽象方法
@@ -124,7 +130,7 @@ public class AutoInsertByCecilEditor
         string res = "";
         for (int i = 0; i < size; i++) {
             var item = items[i];
-            res += $"{item.ParameterType} {item.Name} ,";
+            res += $"{item.ParameterType}_{item.Name} ,";
         }
         if (size > 0)
             res = res.Remove(res.Length - 1, 1);
@@ -154,9 +160,106 @@ public class AutoInsertByCecilEditor
 
     private static void IntertLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition)
     {
+        
         var processor = methodDefinition.Body.GetILProcessor();
         var firstInstruction = methodDefinition.Body.Instructions[0];
-        MethodReference logMethodReference = moduleDefinition.ImportReference(typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64)}));
+        processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldc_I4_0));
+        var list = GetParamList(methodDefinition);
+        for(int i = 0; i < list.Count; ++i)
+        {
+            var item = list[i];
+            var pType = item.Pdef.ParameterType;
+            if (pType.Name == "Fix64")
+            {
+                processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldarga_S, item.Pdef));
+            }
+            else
+            {
+                var op = GetIndexOpcode(item.Index);
+                if (op == OpCodes.Ldarg_S)
+                {
+                    processor.InsertBefore(firstInstruction, processor.Create(op, item.Pdef));
+                }
+                else
+                {
+                    processor.InsertBefore(firstInstruction, processor.Create(op));
+                }
+                if (pType.Name != "Int64")
+                {
+                    processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Conv_I8));
+                }
+            }
+        }
+        MethodBase logTrackMethod = GetLogTrackMethod(list.Count);
+        MethodReference logMethodReference = moduleDefinition.ImportReference(logTrackMethod);
+        processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Call, logMethodReference));
+    }
+
+    private static OpCode GetIndexOpcode(int idx)
+    {
+        if (idx > 3)
+            return OpCodes.Ldarg_S;
+        switch(idx)
+        {
+            case 1:
+                return OpCodes.Ldarg_1;
+            case 2:
+                return OpCodes.Ldarg_2;
+            case 3:
+                return OpCodes.Ldarg_3;
+        }
+        return OpCodes.Nop;
+    }
+
+    private static MethodBase GetLogTrackMethod(int paramCount)
+    {
+        MethodBase method = null;
+        switch(paramCount)
+        {
+            case 0:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16)});
+                break;
+            case 1:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64)});
+                break;
+            case 2:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64), typeof(Int64)});
+                break;
+            case 3:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64), typeof(Int64), typeof(Int64)});
+                break;
+            case 4:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64)});
+                break;
+            case 5:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64)});
+                break;
+            case 6:
+                method =  typeof(FSPDebuger).GetMethod("LogTrack", new Type[] {typeof(UInt16), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64), typeof(Int64)});
+                break;
+            default:
+                throw new ArgumentException("paramCount > 6");
+        }
+        return method;
+    }
+
+    private static List<ParamClassForIL> GetParamList(MethodDefinition methodDefinition)
+    {
+        var parameters = methodDefinition.Parameters;
+        var items = parameters.items;
+        var size = parameters.size;
+        List<ParamClassForIL> res = new List<ParamClassForIL>();
+        for(int i = 0; i < size; ++i)
+        {
+            var item = items[i];
+            var pType = item.ParameterType;
+            if (pType.IsValueType && (pType.Name == "Int64" || pType.Name == "Int32" || pType.Name == "UInt16" || pType.Name == "Fix64"))
+            {
+                ParamClassForIL element = new ParamClassForIL(item, i + 1);
+                res.Add(element);
+            }
+        }
+        return res;
     }
 }
  
