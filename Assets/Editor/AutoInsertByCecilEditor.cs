@@ -108,12 +108,6 @@ public class AutoInsertByCecilEditor
                     Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
                     
                     IntertLogTrackCode(moduleDefinition, methodDefinition);
-                    
-                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldc_I4_0));
-                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldarg_1));
-                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Conv_I8));
-                    // processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Call, logMethodReference));
-                    // SequencePoint seqPoint = methodDefinition.DebugInformation.GetSequencePoint(firstInstruction);   //Ö¸ÁîÐÐÊý
 
                     wasProcessed = true;
                 }
@@ -172,6 +166,9 @@ public class AutoInsertByCecilEditor
             if (pType.Name == "Fix64")
             {
                 processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldarga_S, item.Pdef));
+                var method = typeof(Fix64).GetMethod("get_RawValue", new Type[] {});
+                var rawValueMethod = moduleDefinition.ImportReference(method);
+                processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Call, rawValueMethod));
             }
             else
             {
