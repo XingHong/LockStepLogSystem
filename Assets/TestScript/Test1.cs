@@ -51,4 +51,9 @@ public class Test1
     {
 
     }
+
+    public void TestSimple()
+    {
+        int a = 1;
+    }
 }

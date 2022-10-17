@@ -12,9 +12,10 @@ public class AutoInsertByCecilEditor
 {
     static List<string> assemblyPathss = new List<string>()
     {
-        Application.dataPath+"/../Library/ScriptAssemblies/Assembly-CSharp.dll",
-        // Application.dataPath+"/../Library/ScriptAssemblies/Assembly-CSharp-firstpass.dll",         
- 
+        Application.dataPath+"/../Library/ScriptAssemblies/Test.dll",
+        // Application.dataPath+"/../TestLib/TestInDotNetCore.exe",
+        // Application.dataPath+"/../TestLib/battle.exe",
+        // Application.dataPath+"/../TestLib/TestInDotNetCore.dll",
     };
  
     [MenuItem("AutoInsert/IL注入日志代码")]
@@ -51,20 +52,22 @@ public class AutoInsertByCecilEditor
                 writerParameters.WriteSymbols = true;
                 writerParameters.SymbolWriterProvider = new Mono.Cecil.Pdb.PdbWriterProvider();
  
-                AssemblyDefinition assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
-                Debug.Log("Processing " + Path.GetFileName(assemblyPath));
-                if (AutoInsertByCecilEditor.ProcessAssembly(assemblyDefinition))
+                using(AssemblyDefinition assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters))
                 {
-                    Debug.Log("Writing to " + assemblyPath);
-                    // assemblyDefinition.Write(assemblyPath, writerParameters);
-                    assemblyDefinition.Write(assemblyPath + ".backup", writerParameters);
-                    Debug.Log("Done writing");  
+                    Debug.Log("Processing " + Path.GetFileName(assemblyPath));
+                    if (AutoInsertByCecilEditor.ProcessAssembly(assemblyDefinition))
+                    {
+                        Debug.Log("Writing to " + assemblyPath);
+                        // assemblyDefinition.Write(assemblyPath, writerParameters);
+                        assemblyDefinition.Write(writerParameters);
+                        // assemblyDefinition.Write();
+                        Debug.Log("Done writing");  
+                    }
+                    else
+                    {
+                        Debug.Log(Path.GetFileName(assemblyPath) + " didn't need to be processed");
+                    }
                 }
-                else
-                {
-                    Debug.Log(Path.GetFileName(assemblyPath) + " didn't need to be processed");
-                }
-                assemblyDefinition.Dispose();
             }
         }
         catch (Exception e)
