@@ -62,11 +62,6 @@ public class AutoInstertEditor
             IntertLogTrackCode(file.FullName);
         }
 
-        foreach (FileInfo file in filterFiles)
-        {
-            HandleLogTrack(file.FullName);
-        }
-
         LogTrackPdbFile pdb = new LogTrackPdbFile();
         foreach (FileInfo file in filterFiles)
         {
@@ -238,11 +233,6 @@ public class AutoInstertEditor
         while (pos < str.Length && str[pos] != ' ' && str[pos] != ')' && str[pos] != ',' && str[pos] != '=') ++pos;
         string res = str.Substring(start, pos - start);
         return res;
-    }
-
-    private static void HandleLogTrack(string path)
-    {
-
     }
 
     private static void HashLogTrackCode(string path, LogTrackPdbFile pdb)
