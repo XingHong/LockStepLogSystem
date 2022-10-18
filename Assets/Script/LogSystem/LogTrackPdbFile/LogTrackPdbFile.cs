@@ -5,7 +5,7 @@ using UnityEngine;
 using System;
 
 
-public class LogTrackPdbFile
+public class LogTrackPdbFile : ILogTrackPdbFile
 {
     private string m_pdbPath;
     private int m_hashId;

@@ -79,45 +79,53 @@ public class AutoInsertByCecilEditor
  
     private static bool ProcessAssembly(AssemblyDefinition assemblyDefinition)
     {
-        bool wasProcessed = false;
- 
+        bool wasProcessed = true;
+        
         foreach (ModuleDefinition moduleDefinition in assemblyDefinition.Modules)
         {
-            Debug.Log($"model:{moduleDefinition.Name}");
             foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
             {
-                if (typeDefinition.Name == typeof(AutoInsertByCecilEditor).Name) continue;
-                if (typeDefinition.Name == typeof(FSPDebuger).Name) continue;
-                if (typeDefinition.Name == typeof(CheckMode).Name) continue;
-                if (typeDefinition.Name == typeof(PVPMode).Name) continue;
-                if (typeDefinition.Name == typeof(PCMode).Name) continue;
-
-                //过滤抽象类
-                if (typeDefinition.IsAbstract) continue;
-                //过滤抽象方法
-                if (typeDefinition.IsInterface) continue;
+                if (FilterTypeDef(typeDefinition)) continue;
                 foreach (MethodDefinition methodDefinition in typeDefinition.Methods)
                 {
-                    //过滤构造函数
-                    if(methodDefinition.Name == ".ctor")continue;
-                    if (methodDefinition.Name == ".cctor") continue;
-                    //过滤抽象方法,get set 方法
-                    if (methodDefinition.IsAbstract) continue;
-                    if (methodDefinition.IsGetter) continue;
-                    if (methodDefinition.IsSetter) continue;
+                    if (FilterMethodDef(methodDefinition)) continue;
+
                     //过滤掉已经有FSPDebuger操作的函数，没必要自动注入
                     if (HasFSPDebuger(methodDefinition)) continue;
                     //如果注入代码失败，可以打开下面的输出看看卡在了那个方法上。
-                    Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
-                    
-                    IntertLogTrackCode(moduleDefinition, methodDefinition);
+                    //Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
 
-                    wasProcessed = true;
+                    IntertLogTrackCode(moduleDefinition, methodDefinition);
                 }
             }
-            
+
+            LogTrackPdbFile pdb = new LogTrackPdbFile();
+            foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
+            {
+                if (FilterTypeDef(typeDefinition)) continue;
+                foreach (MethodDefinition methodDefinition in typeDefinition.Methods)
+                {
+                    if (FilterMethodDef(methodDefinition)) continue;
+
+                    HashLogTrackCode(moduleDefinition, methodDefinition);
+                }
+            }
+            pdb.SavePdb();
         }
+
         return wasProcessed;
+    }
+
+    private static bool FilterTypeDef(TypeDefinition typeDefinition)
+    {
+        //过滤特定类，抽象类，接口
+        return typeDefinition.Name == typeof(PCMode).Name || typeDefinition.IsAbstract || typeDefinition.IsInterface;
+    }
+
+    private static bool FilterMethodDef(MethodDefinition methodDefinition)
+    {
+        return methodDefinition.Name == ".ctor" || methodDefinition.Name == ".cctor"        //过滤构造函数
+            || methodDefinition.IsAbstract || methodDefinition.IsGetter || methodDefinition.IsSetter;   //过滤抽象方法,get set 方法
     }
 
     private static string GetDebugParams(Collection<ParameterDefinition> param)
@@ -157,7 +165,6 @@ public class AutoInsertByCecilEditor
 
     private static void IntertLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition)
     {
-        
         var processor = methodDefinition.Body.GetILProcessor();
         var firstInstruction = methodDefinition.Body.Instructions[0];
         processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Ldc_I4_0));
@@ -192,7 +199,8 @@ public class AutoInsertByCecilEditor
         }
         MethodBase logTrackMethod = GetLogTrackMethod(list.Count);
         MethodReference logMethodReference = moduleDefinition.ImportReference(logTrackMethod);
-        processor.InsertBefore(firstInstruction, processor.Create(OpCodes.Call, logMethodReference));
+        var newInstruction = processor.Create(OpCodes.Call, logMethodReference);
+        processor.InsertBefore(firstInstruction, newInstruction);
     }
 
     private static OpCode GetIndexOpcode(int idx)
@@ -260,6 +268,11 @@ public class AutoInsertByCecilEditor
             }
         }
         return res;
+    }
+
+    private static void HashLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition)
+    {
+
     }
 }
  
