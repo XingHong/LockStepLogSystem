@@ -12,7 +12,7 @@ public class SubClass2 : SubClass
 
     public override void Test2(int a)
     {
-        FSPDebuger.LogTrack(999, a);/*test2 in subclass2*/
+        FSPDebuger.LogTrack(0, a);/*test2 in subclass2*/
     }
 
 }
