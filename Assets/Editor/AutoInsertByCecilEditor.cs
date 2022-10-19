@@ -99,7 +99,7 @@ public class AutoInsertByCecilEditor
                 }
             }
 
-            LogTrackPdbFile pdb = new LogTrackPdbFile();
+            ILogTrackPdbFile pdb = new InjectLogTrackPdbFile();
             foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
             {
                 if (FilterTypeDef(typeDefinition)) continue;
@@ -107,7 +107,7 @@ public class AutoInsertByCecilEditor
                 {
                     if (FilterMethodDef(methodDefinition)) continue;
 
-                    HashLogTrackCode(moduleDefinition, methodDefinition);
+                    HashLogTrackCode(moduleDefinition, methodDefinition, typeDefinition, pdb);
                 }
             }
             pdb.SavePdb();
@@ -270,9 +270,55 @@ public class AutoInsertByCecilEditor
         return res;
     }
 
-    private static void HashLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition)
+    private static void HashLogTrackCode(ModuleDefinition moduleDefinition, MethodDefinition methodDefinition, TypeDefinition typeDefinition, ILogTrackPdbFile pdb)
     {
+        ReplaceHash(methodDefinition, typeDefinition, pdb);
+    }
 
+    private static void ReplaceHash(MethodDefinition methodDefinition, TypeDefinition typeDefinition, ILogTrackPdbFile pdb)
+    {
+        List<PdbInfoForILInject> replaceInsList = new List<PdbInfoForILInject>();
+
+        var processor = methodDefinition.Body.GetILProcessor();
+        foreach (var instruction in methodDefinition.Body.Instructions)
+        {
+            if (instruction.OpCode == OpCodes.Call)
+            {
+                MethodReference methodCall = instruction.Operand as MethodReference;
+                if(methodCall != null)
+                {
+                    string mfName = methodCall.MemberFullName();
+                    if (mfName == "FSPDebuger::LogTrack")
+                    {
+                        var curIns = instruction.Previous;
+                        while(curIns != null)
+                        {
+                            if (curIns.opcode == OpCodes.Ldc_I4_0)
+                            {
+                                var item = new PdbInfoForILInject();
+                                item.ins = curIns;
+                                item.argCnt = methodCall.parameters.Count - 1;
+                                item.debugStr = methodDefinition.Name;
+                                item.typeName = typeDefinition.Name;
+                                SequencePoint seqPoint = methodDefinition.DebugInformation.GetSequencePoint(curIns);
+                                item.line = seqPoint.StartLine;
+                                replaceInsList.Add(item);
+                                break;
+                            }
+                            curIns = curIns.Previous;
+                        }
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < replaceInsList.Count; ++i)
+        {
+            var item = replaceInsList[i];
+            int id = pdb.AddItem(0, item.argCnt, item.typeName, item.line, item.debugStr);
+            var newInstrcution = processor.Create(OpCodes.Ldc_I4, id);
+            processor.Replace(item.ins, newInstrcution);
+        }
     }
 }
  
