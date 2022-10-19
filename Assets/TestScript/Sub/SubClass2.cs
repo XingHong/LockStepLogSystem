@@ -6,13 +6,13 @@ public class SubClass2 : SubClass
 {
     public override void Test1()
     {
-        FSPDebuger.IgnoreTrack();
+        FSPDebuger.IgnoreTrack(); 
         Debug.Log("sb2, Test!!!");
     }
 
     public override void Test2(int a)
     {
-        FSPDebuger.LogTrack(14, a);/*test2 in subclass2*/
+        FSPDebuger.LogTrack(999, a);/*test2 in subclass2*/
     }
 
 }
