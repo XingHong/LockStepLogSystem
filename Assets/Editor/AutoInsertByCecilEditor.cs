@@ -10,13 +10,17 @@ using System.Reflection;
  
 public class AutoInsertByCecilEditor 
 {
-    static List<string> assemblyPathss = new List<string>()
+    private static List<string> ms_assemblyPathss = new List<string>()
     {
         Application.dataPath+"/../Library/ScriptAssemblies/Test.dll",
         // Application.dataPath+"/../TestLib/TestInDotNetCore.exe",
         // Application.dataPath+"/../TestLib/battle.exe",
         // Application.dataPath+"/../TestLib/TestInDotNetCore.dll",
     };
+
+    private static HashSet<string> ms_excludeTypeSet;
+    private const string CODE_FILE_ROOT = "TestScript";
+    private static string ms_basePath;
  
     [MenuItem("AutoInsert/IL注入日志代码")]
     static void Inject()
@@ -29,6 +33,10 @@ public class AutoInsertByCecilEditor
         try
         {
             Debug.Log("AssemblyPostProcessor running");
+            ms_basePath = Path.Combine(Application.dataPath, CODE_FILE_ROOT);
+            ms_basePath = ms_basePath.Replace("/", "\\");
+            ms_excludeTypeSet = ExcludeTypeSet(ms_basePath);
+            
             EditorApplication.LockReloadAssemblies();
             DefaultAssemblyResolver assemblyResolver = new DefaultAssemblyResolver();
  
@@ -44,7 +52,7 @@ public class AutoInsertByCecilEditor
  
             WriterParameters writerParameters = new WriterParameters();
  
-            foreach (String assemblyPath in assemblyPathss)
+            foreach (String assemblyPath in ms_assemblyPathss)
             {
                 readerParameters.ReadSymbols = true;
                 readerParameters.SymbolReaderProvider = new Mono.Cecil.Pdb.PdbReaderProvider();
@@ -102,7 +110,6 @@ public class AutoInsertByCecilEditor
             ILogTrackPdbFile pdb = new InjectLogTrackPdbFile();
             foreach (TypeDefinition typeDefinition in moduleDefinition.Types)
             {
-                if (FilterTypeDef(typeDefinition)) continue;
                 foreach (MethodDefinition methodDefinition in typeDefinition.Methods)
                 {
                     if (FilterMethodDef(methodDefinition)) continue;
@@ -116,10 +123,44 @@ public class AutoInsertByCecilEditor
         return wasProcessed;
     }
 
+    private static HashSet<string> ExcludeTypeSet(string root)
+    {
+        var set = new HashSet<string>(GetExcludeTypeList());
+        List<string> res = new List<string>();
+        foreach(var dir in GetExcludeDirectoryList())
+        {
+            string excludeDir = root + "\\" + dir;
+            excludeDir = excludeDir.Replace("/", "\\");
+            var files = Directory.GetFiles(excludeDir, "*.cs", SearchOption.AllDirectories);
+            foreach(var file in files)
+            {
+                string cn = Path.GetFileNameWithoutExtension(file);
+                set.Add(cn);
+            }
+        }
+        return set;
+    }
+
+    private static List<string> GetExcludeDirectoryList()
+    {
+        return new List<String>
+        {
+            "Other",
+        };
+    }
+
+    public static List<string> GetExcludeTypeList()
+    {
+        return new List<String>
+        {
+            "SubClass3",
+        };
+    }
+
     private static bool FilterTypeDef(TypeDefinition typeDefinition)
     {
         //过滤特定类，抽象类，接口
-        return typeDefinition.Name == typeof(PCMode).Name || typeDefinition.IsAbstract || typeDefinition.IsInterface;
+        return ms_excludeTypeSet.Contains(typeDefinition.Name) || typeDefinition.IsAbstract || typeDefinition.IsInterface;
     }
 
     private static bool FilterMethodDef(MethodDefinition methodDefinition)
