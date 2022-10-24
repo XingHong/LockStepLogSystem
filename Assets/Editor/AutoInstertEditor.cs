@@ -62,6 +62,12 @@ public class AutoInstertEditor
             IntertLogTrackCode(file.FullName);
         }
 
+        filterFiles = new List<FileInfo>();
+        foreach (FileInfo item in fileInfoList)
+        {
+            filterFiles.Add(item);
+        }
+
         LogTrackPdbFile pdb = new LogTrackPdbFile();
         foreach (FileInfo file in filterFiles)
         {
