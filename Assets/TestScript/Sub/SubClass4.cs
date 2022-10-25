@@ -21,4 +21,9 @@ public class SubClass4 : SubClass
     {
         FSPDebuger.LogTrack(0, c, d);
     }
+
+    public void TestParam5(object a, int b)
+    {
+
+    }
 }
