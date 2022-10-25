@@ -26,4 +26,9 @@ public class SubClass4 : SubClass
     {
 
     }
+
+    public static void TestParam6(object a, int b)
+    {
+ 
+    }
 }

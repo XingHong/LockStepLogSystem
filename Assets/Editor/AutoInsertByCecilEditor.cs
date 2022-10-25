@@ -223,7 +223,16 @@ public class AutoInsertByCecilEditor
             }
             else
             {
-                var op = GetIndexOpcode(item.Index);
+                OpCode op;
+                if (methodDefinition.IsStatic)
+                {
+                    op = GetStaticIndexOpcode(item.Index);
+                }
+                else
+                {
+                    op = GetIndexOpcode(item.Index);
+                }
+
                 if (op == OpCodes.Ldarg_S)
                 {
                     processor.InsertBefore(firstInstruction, processor.Create(op, item.Pdef));
@@ -256,6 +265,22 @@ public class AutoInsertByCecilEditor
                 return OpCodes.Ldarg_2;
             case 3:
                 return OpCodes.Ldarg_3;
+        }
+        return OpCodes.Nop;
+    }
+
+    private static OpCode GetStaticIndexOpcode(int idx)
+    {
+        if (idx > 3)
+            return OpCodes.Ldarg_S;
+        switch(idx)
+        {
+            case 1:
+                return OpCodes.Ldarg_0;
+            case 2:
+                return OpCodes.Ldarg_1;
+            case 3:
+                return OpCodes.Ldarg_2;
         }
         return OpCodes.Nop;
     }
