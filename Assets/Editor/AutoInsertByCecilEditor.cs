@@ -34,7 +34,7 @@ public class AutoInsertByCecilEditor
         {
             Debug.Log("AssemblyPostProcessor running");
             ms_basePath = Path.Combine(Application.dataPath, CODE_FILE_ROOT);
-            ms_basePath = ms_basePath.Replace("/", "\\");
+            ms_basePath = ChangePathSeparatorChar(ms_basePath);
             ms_excludeTypeSet = ExcludeTypeSet(ms_basePath);
             
             EditorApplication.LockReloadAssemblies();
@@ -123,14 +123,21 @@ public class AutoInsertByCecilEditor
         return wasProcessed;
     }
 
+    private static string ChangePathSeparatorChar(string path)
+    {
+        if (Path.DirectorySeparatorChar != '/')
+            return path.Replace('/', Path.DirectorySeparatorChar);
+        return path;
+    }
+
     private static HashSet<string> ExcludeTypeSet(string root)
     {
         var set = new HashSet<string>(GetExcludeTypeList());
         List<string> res = new List<string>();
         foreach(var dir in GetExcludeDirectoryList())
         {
-            string excludeDir = root + "\\" + dir;
-            excludeDir = excludeDir.Replace("/", "\\");
+            string excludeDir = Path.Combine(root, dir);
+            excludeDir = ChangePathSeparatorChar(excludeDir);
             var files = Directory.GetFiles(excludeDir, "*.cs", SearchOption.AllDirectories);
             foreach(var file in files)
             {
