@@ -208,7 +208,10 @@ public class AutoInsertByCecilEditor
                     }
                 }
             }
-
+        }
+        
+        foreach (var instruction in methodDefinition.Body.Instructions)
+        {
             if (instruction.OpCode == OpCodes.Newobj)
             {
                 MethodDefinition methodDef =  instruction.Operand as MethodDefinition;
