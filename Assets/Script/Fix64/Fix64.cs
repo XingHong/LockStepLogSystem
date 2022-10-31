@@ -6,4 +6,9 @@ public struct Fix64
 {
     long m_rawValue;
     public long RawValue{set {m_rawValue = value;} get{return m_rawValue;}}
+
+    public Fix64(int i)
+    {
+        m_rawValue = i;
+    }
 }

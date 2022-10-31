@@ -26,7 +26,7 @@ namespace MyTest
 
         public void TestParam5(object a, int b)
         {
-
+            Fix64 f = new Fix64(5); 
         }
 
         public static void TestParam6(object a, int b)
