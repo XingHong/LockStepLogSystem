@@ -98,8 +98,8 @@ public class AutoInsertByCecilEditor
                 {
                     if (FilterMethodDef(methodDefinition)) continue;
 
-                    //过滤掉已经有FSPDebuger操作的函数，没必要自动注入
-                    if (HasFSPDebuger(methodDefinition)) continue;
+                    //过滤掉已经有FSPDebuger操作的函数和有匿名委托的函数，没必要自动注入
+                    if (FilterInvaild(methodDefinition)) continue;
                     //如果注入代码失败，可以打开下面的输出看看卡在了那个方法上。
                     //Debug.Log(methodDefinition.Name + "======= " + typeDefinition.Name + "======= " +GetDebugParams(methodDefinition.Parameters) +" ===== "+ moduleDefinition.Name);
 
@@ -190,7 +190,8 @@ public class AutoInsertByCecilEditor
         return res;
     }
 
-    private static bool HasFSPDebuger(MethodDefinition methodDefinition)
+    //过滤有FSPDebuger的函数，有匿名委托的函数（如果需要注入，要手动注入）
+    private static bool FilterInvaild(MethodDefinition methodDefinition)
     {
         var processor = methodDefinition.Body.GetILProcessor();
         foreach (var instruction in methodDefinition.Body.Instructions)
@@ -204,6 +205,19 @@ public class AutoInsertByCecilEditor
                     if (mfName == "FSPDebuger::LogTrack" || mfName == "FSPDebuger::IgnoreTrack")
                     {
                         return true;
+                    }
+                }
+            }
+
+            if (instruction.OpCode == OpCodes.Newobj)
+            {
+                MethodDefinition methodDef =  instruction.Operand as MethodDefinition;
+                if (methodDef != null)
+                {
+                    if (methodDef.FullName.Contains("c__DisplayClass") || methodDef.FullName.Contains("c__AnonStorey"))
+                    {
+                        Debug.LogWarning($"instruction.Operand:{instruction.Operand}, 如果需要，请手动注入");
+                        return true;   
                     }
                 }
             }
